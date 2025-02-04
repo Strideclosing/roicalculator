@@ -1,0 +1,42 @@
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 40px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 2px solid #B8860B;
+}
+
+.title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: #B8860B;
+  margin-bottom: 20px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sliders {
+  flex-grow: 1;
+  padding-right: 20px;
+}
+
+.dropdown-container {
+  flex-grow: 0;
+}
+
+.chart-container {
+  padding: 20px;
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #B8860B;
+  text-align: center;
+}
+

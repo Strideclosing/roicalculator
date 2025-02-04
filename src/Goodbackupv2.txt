@@ -1,0 +1,121 @@
+import React, { useState, useMemo } from "react";
+import { Chart, registerables } from "chart.js";
+import { Line } from "react-chartjs-2";
+import { Slider, MenuItem, Select } from "@mui/material";
+import annotationPlugin from "chartjs-plugin-annotation";
+import "./ROICalculator.css";
+
+Chart.register(...registerables, annotationPlugin);
+
+const growthMultipliers = {
+  slow: { values: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], percentage: "~5% Growth" },
+  medium: { values: [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], percentage: "~10% Growth" },
+  fast: { values: [5, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48], percentage: "~20% Growth" },
+};
+
+const ROICalculator = () => {
+  const [programCost, setProgramCost] = useState(10000);
+  const [subscriptionCost, setSubscriptionCost] = useState(200);
+  const [timeFrame, setTimeFrame] = useState(12);
+  const [growthRate, setGrowthRate] = useState("medium");
+
+  const attritionRate = 0.05;
+  const months = useMemo(() => Array.from({ length: timeFrame }, (_, i) => i + 1), [timeFrame]);
+
+  const { cumulativeRevenue, roiMonth } = useMemo(() => {
+    let revenue = 0;
+    let totalClients = 0;
+    let cumulativeRevenue = [];
+    let roiMonth = null;
+
+    months.forEach((month, index) => {
+      const newClients = growthMultipliers[growthRate].values[index] || growthMultipliers[growthRate].values.slice(-1)[0];
+      totalClients += newClients;
+      totalClients -= totalClients * attritionRate;
+      revenue += totalClients * subscriptionCost;
+      cumulativeRevenue.push(revenue);
+
+      if (roiMonth === null && revenue >= programCost) {
+        roiMonth = month;
+      }
+    });
+
+    return { cumulativeRevenue, roiMonth };
+  }, [programCost, subscriptionCost, growthRate, months]);
+
+  const data = {
+    labels: months,
+    datasets: [{ label: "Cumulative Revenue ($)", data: cumulativeRevenue, borderColor: "#B8860B", borderWidth: 4, tension: 0.4 }],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: "black",
+          font: { size: 14, weight: "bold" },
+          padding: 20,
+        },
+        position: "top",
+      },
+      annotation: {
+        annotations: roiMonth !== null ? {
+          roiLine: {
+            type: "line",
+            xMin: roiMonth,
+            xMax: roiMonth,
+            borderColor: "green",
+            borderWidth: 3,
+            borderDash: [6, 6],
+            label: { content: "ROI Point", enabled: true, position: "top", color: "green", font: { size: 14, weight: "bold" } },
+          },
+        } : {},
+      },
+    },
+    scales: {
+      y: {
+        grid: { display: true },
+        ticks: {
+          color: "black",
+          font: { size: 12, weight: "bold" },
+          callback: value => `$${value.toLocaleString()}`,
+          stepSize: 2000,
+        },
+      },
+      x: {
+        grid: { display: true },
+      },
+    },
+  };
+
+  return (
+    <div className="container" style={{ paddingTop: "10px" }}>
+      <h2 className="title" style={{ marginBottom: "10px" }}>ROI Calculator</h2>
+      <div className="chart-container" style={{ height: "300px" }}>
+        <Line data={data} options={options} />
+      </div>
+      <div className="controls-layout" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", paddingTop: "20px" }}>
+        <div className="sliders" style={{ width: "70%" }}>
+          <label>Program Cost: ${programCost.toLocaleString()}</label>
+          <Slider value={programCost} onChange={(e, val) => setProgramCost(val)} min={8500} max={15000} step={500} sx={{ color: "#B8860B", height: 8 }} />
+          <label>Subscription Cost: ${subscriptionCost.toLocaleString()}</label>
+          <Slider value={subscriptionCost} onChange={(e, val) => setSubscriptionCost(val)} min={50} max={500} step={10} sx={{ color: "#B8860B", height: 8 }} />
+          <label>Time Frame: {timeFrame} months</label>
+          <Slider value={timeFrame} onChange={(e, val) => setTimeFrame(val)} min={6} max={36} step={6} sx={{ color: "#B8860B", height: 8 }} />
+        </div>
+        <div className="dropdown-container" style={{ width: "30%", display: "flex", flexDirection: "column", alignItems: "center", marginTop: "-20px", padding: "10px", borderRadius: "8px", boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)" }}>
+          <label className="dropdown-label" style={{ marginBottom: "5px", fontSize: "14px", fontWeight: "bold" }}>Growth Rate:</label>
+          <Select value={growthRate} onChange={e => setGrowthRate(e.target.value)} sx={{ minWidth: "120px", backgroundColor: "white", borderRadius: "8px", boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)" }}>
+            {Object.keys(growthMultipliers).map(rate => (
+              <MenuItem key={rate} value={rate}>{rate.charAt(0).toUpperCase() + rate.slice(1)}</MenuItem>
+            ))}
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ROICalculator;
