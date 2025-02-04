@@ -31,3 +31,9 @@ package-lock.json
 
 # Misc
 *.swp
+
+# Vercel build folder
+.vercel/
+
+# Unwanted project folder
+roicalculator/
